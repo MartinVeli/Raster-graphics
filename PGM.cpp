@@ -160,11 +160,25 @@ const MyString& PGM::collage(const char* first, const char* second, char directi
             firstFile.getWith() == secondFile.getWith())
         {
             PGM toReturn(first, newFile);
-            for (size_t i = firstFile.pixels.getSize(), j = 0; j < secondFile.pixels.getSize(); i++, j++)
-            {
-                toReturn.pixels[i] = secondFile.pixels[j];
+            if (direction == 'h') {
+                for (size_t i = firstFile.pixels.getSize(), j = 0; j < secondFile.pixels.getSize(); i++, j++)
+                {
+                    toReturn.pixels[i] = secondFile.pixels[j];
+                }
+                toReturn.height *= 2;
             }
-            direction == 'h' ? toReturn.height *= 2 : toReturn.with *= 2;
+            else {
+                for (size_t i = 0, j = firstFile.getWith(), k = 0; i < secondFile.pixels.getSize(); i++,j+= firstFile.getWith(), k+= firstFile.getWith()) {
+
+                    for (size_t g = firstFile.getWith(); g > 0; g--, j++, k++)
+                    {
+                        toReturn.pixels[k] = firstFile.pixels[i];
+                        toReturn.pixels[j] = secondFile.pixels[i];
+                    }
+                }
+                toReturn.with *= 2;
+            }
+            
             if (firstFile.maxValue < secondFile.maxValue)
                 toReturn.maxValue = secondFile.maxValue;
             toReturn.save();
@@ -174,4 +188,3 @@ const MyString& PGM::collage(const char* first, const char* second, char directi
             throw std::runtime_error("Difference in widths or heights of images"); 
 
 }
-
