@@ -4,7 +4,7 @@ class PPM : public File
 {
 	struct Pixel
 	{
-		Vector<unsigned char> rgb;
+		unsigned char rgb[3];
 	};
 
 protected:
