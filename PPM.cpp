@@ -18,7 +18,9 @@ PPM::PPM(const char* fileName)
         size_t end = File::with * File::height;
         for (size_t i = 0; i < end; i++)
         {
-            file.read(reinterpret_cast<char*>(&pixels[i]), 3 * sizeof(unsigned char));
+            file.read(reinterpret_cast<char*>(&pixels[i].rgb[0]), sizeof(unsigned char));
+            file.read(reinterpret_cast<char*>(&pixels[i].rgb[1]), sizeof(unsigned char));
+            file.read(reinterpret_cast<char*>(&pixels[i].rgb[2]), sizeof(unsigned char));
         }
    
         File::fileName = fileName;
@@ -114,14 +116,18 @@ void PPM::rotate(char direction)
     if (direction == 'l') {
         for (size_t i = File::with - 1, z = 0; i >= 0; i--, z += File::height) {
             for (size_t j = 0, k = File::height - 1, g = pixels.getSize() - 1 - z; k >= 0; g--, j += with, k--) {
-                pixels[i + j].rgb = (*snapshot)[g].rgb;
+                pixels[i + j].rgb[0] = (*snapshot)[g].rgb[0];
+                pixels[i + j].rgb[1] = (*snapshot)[g].rgb[1];
+                pixels[i + j].rgb[2] = (*snapshot)[g].rgb[2];
             }
         }
     }
     else {
         for (size_t i = File::with - 1, z = 0; i >= 0; i--, z += File::height) {
             for (size_t j = 0, k = File::height - 1, g = 0 + z; k >= 0; g++, j += with, k--) {
-                pixels[i + j].rgb = (*snapshot)[g].rgb;
+                pixels[i + j].rgb[0] = (*snapshot)[g].rgb[0];
+                pixels[i + j].rgb[1] = (*snapshot)[g].rgb[1];
+                pixels[i + j].rgb[2] = (*snapshot)[g].rgb[2];
             }
         }
     }
@@ -136,9 +142,9 @@ void PPM::negative()
 
     for (size_t i = 0; i < pixels.getSize(); i++)
     {
-        pixels[i].rgb.operator[](0) = maxValue - pixels[i].rgb.operator[](0);
-        pixels[i].rgb.operator[](1) = maxValue - pixels[i].rgb.operator[](1);
-        pixels[i].rgb.operator[](2) = maxValue - pixels[i].rgb.operator[](2);
+        pixels[i].rgb[0] = maxValue - pixels[i].rgb[0];
+        pixels[i].rgb[1] = maxValue - pixels[i].rgb[1];
+        pixels[i].rgb[2] = maxValue - pixels[i].rgb[2];
     }
 }
 
@@ -166,7 +172,9 @@ void PPM::save()
 
         for (size_t i = 0; i < pixels.getSize(); i++)
         {
-            file.write(reinterpret_cast<const char*>(&pixels[i]), 3 * sizeof(unsigned char));
+            file.write(reinterpret_cast<const char*>(&pixels[i].rgb[0]), sizeof(unsigned char));
+            file.write(reinterpret_cast<const char*>(&pixels[i].rgb[1]), sizeof(unsigned char));
+            file.write(reinterpret_cast<const char*>(&pixels[i].rgb[2]), sizeof(unsigned char));
         }
         file.close();
     
@@ -183,7 +191,9 @@ void PPM::saveAs(const char* file1)
 
     for (size_t i = 0; i < pixels.getSize(); i++)
     {
-        file.write(reinterpret_cast<const char*>(&pixels[i]), 3 * sizeof(unsigned char));
+        file.write(reinterpret_cast<const char*>(&pixels[i].rgb[0]), sizeof(unsigned char));
+        file.write(reinterpret_cast<const char*>(&pixels[i].rgb[1]), sizeof(unsigned char));
+        file.write(reinterpret_cast<const char*>(&pixels[i].rgb[2]), sizeof(unsigned char));
     }
     file.close();
 }
@@ -197,11 +207,29 @@ const MyString& PPM::collage(const char* first, const char* second, char directi
             firstFile.getWith() == secondFile.getWith())
         {
             PPM toReturn(first, newFile);
-            for (size_t i = firstFile.pixels.getSize(), j = 0; j < secondFile.pixels.getSize(); i++, j++)
-            {
-                toReturn.pixels[i].rgb = secondFile.pixels[j].rgb;
+            if (direction == 'h') {
+                for (size_t i = firstFile.pixels.getSize(), j = 0; j < secondFile.pixels.getSize(); i++, j++)
+                {
+                    toReturn.pixels[i] = secondFile.pixels[j];
+                }
+                toReturn.height *= 2;
             }
-            direction == 'h' ? toReturn.height *= 2 : toReturn.with *= 2;
+            else {
+                for (size_t i = 0, j = firstFile.getWith(), k = 0; i < secondFile.pixels.getSize(); i++, j += firstFile.getWith(), k += firstFile.getWith()) {
+
+                    for (size_t g = firstFile.getWith(); g > 0; g--, j++, k++)
+                    {
+                        toReturn.pixels[k].rgb[0] = firstFile.pixels[i].rgb[0];
+                        toReturn.pixels[k].rgb[1] = firstFile.pixels[i].rgb[1];
+                        toReturn.pixels[k].rgb[2] = firstFile.pixels[i].rgb[2];
+
+                        toReturn.pixels[j].rgb[0] = secondFile.pixels[i].rgb[0];
+                        toReturn.pixels[j].rgb[1] = secondFile.pixels[i].rgb[1];
+                        toReturn.pixels[j].rgb[2] = secondFile.pixels[i].rgb[2];
+                    }
+                }
+                toReturn.with *= 2;
+            }
             if (firstFile.maxValue < secondFile.maxValue)
                 toReturn.maxValue = secondFile.maxValue;
             toReturn.save();
